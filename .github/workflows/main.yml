@@ -1,0 +1,57 @@
+name: Selenium Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Setup Gradle (com cache)
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Permissão do gradlew
+        run: chmod +x gradlew
+
+      - name: Rodar testes
+        run: ./gradlew test
+        env:
+          CI: "true"
+
+      # if: always() garante o upload mesmo quando algum teste falha
+      - name: Subir resultados (JUnit XML)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: build/test-results/test/*.xml
+          if-no-files-found: error
+
+      - name: Subir relatório HTML
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report-html
+          path: build/reports/tests/test
+
+      # Passo futuro: enviar os resultados para a API
+      # - name: Enviar resultados para a API
+      #   if: always()
+      #   run: |
+      #     curl -X POST "${{ secrets.API_URL }}/api/runs" \
+      #       -H "X-API-Key: ${{ secrets.API_KEY }}" \
+      #       -F "metadata={\"githubRunId\":\"${{ github.run_id }}\",\"branch\":\"${{ github.ref_name }}\",\"commit\":\"${{ github.sha }}\",\"framework\":\"SELENIUM\"};type=application/json" \
+      #       $(for f in build/test-results/test/*.xml; do echo -n "-F files=@$f "; done)
