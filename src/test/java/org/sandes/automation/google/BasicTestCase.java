@@ -5,6 +5,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -14,7 +15,15 @@ public class BasicTestCase {
 
     @BeforeEach
     void setUp() {
-        driver = new ChromeDriver();
+        ChromeOptions options = new ChromeOptions();
+
+        if("true".equals(System.getenv("CI"))) {
+            options.addArguments("--headless", "--no-sandbox", "--disable-dev-shm-usage");
+        }
+
+        options.addArguments("--window-size=1920,1080");
+
+        driver = new ChromeDriver(options);
     }
 
     @AfterEach
